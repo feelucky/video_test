@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+        <meta charset="utf-8">
+<!--        <link rel ="stylesheet" href="css/smoothness/jquery-ui-1.9.2.custom.css" type="test/css">
+        <script src="js/jquery-1.8.3.js"></script>
+        <script src="js/jquery-ui-1.9.2.custom.js"></script>-->
+
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />
+        <script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+        <script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+        <script src="js/whammy.js"></script>
+
+        <title>test video</title>
+        <style>
+            video {
+                width:100%;
+               
+            }
+            button {
+            font: 18px sans-serif;
+            padding: 8px;
+            }
+            
+            
+            div{
+                min-height: 20%;
+                max-height:  80%;
+            }
+            
+            .all {
+                width: 100%;
+            }
+
+            .top-cell {
+                width: 100%;
+            }
+
+            .center-cell {
+                
+                width: 100%;
+            }
+
+            .left-cell {
+                width: 30%;
+            }
+
+            .middle-cell {
+                
+                width: 40%;
+            }
+
+            .right-cell {
+                width: 30%;
+            }
+
+            .bottom-cell {
+                width: 100%;
+            }
+
+
+</style>
+
+    <script>
+       $(init);
+
+         function init(){
+           $('#testvideo1').draggable({cursor: 'move'});
+           $('#testvideo2').draggable({cursor: 'move'});
+       }
+
+        $(function(){
+
+        $('#testvideo1').resizable();
+        $('#testvideo2').resizable();
+        }
+        )
+
+        $(function(){
+
+            $("#v1").bind("play", function() {
+                $("#v2").get(0).play()
+            });
+
+            $("#v1").bind("pause", function() {
+                $("#v2").get(0).pause()
+            });
+
+            $("#v2").bind("play", function() {
+                $("#v1").get(0).play()
+            });
+
+            $("#v2").bind("pause", function() {
+                $("#v1").get(0).pause()
+            });
+        })
+        </script>
+
+        <script>
+        var canvas = document.createElement('canvas');
+        var video_output = document.getElementById('video_output');
+        var video_frames = [];
+        var rafId = null;
+        var video_stop_time = null;
+        var video_start_time = null;
+        var ORIGINAL_DOC_TITLE = document.title;
+        
+        function hasGetUserMedia() {
+             //log
+//             trace("getUserMedia" + ":" + navigator.getUserMedia);
+//             trace("webkitGetUserMedia" + ":" + navigator.webkitGetUserMedia);
+        return !!(navigator.getUserMedia || navigator.webkitGetUserMedia ||
+            navigator.mozGetUserMedia || navigator.msGetUserMedia);
+        }
+
+       
+
+        function gotAudioStream(stream){
+        //alert(arguments.callee.toString());
+            trace(arguments.callee.toString());
+        //output.src = webkitURL.createObjectURL(stream);
+        var audio_output = document.getElementById('audio_output');
+        audio_output.src = webkitURL.createObjectURL(stream);
+        console.log(window.webkitURL.createObjectURL(stream));    
+        //localstream = stream;
+        }
+
+        function startVideo() {
+           // trace(arguments.callee.toString());
+        //alert(arguments.callee.toString());
+        var prepareForRecord = function() {
+                setTimeout(function() {
+                video_output.width = 320;//video.clientWidth;
+                video_output.height = 240;// video.clientHeight;
+                canvas.width = video_output.width;
+                canvas.height = video_output.height;
+                }, 1000);
+            };
+            
+          if(hasGetUserMedia()){
+            trace(arguments.callee.toString());
+            navigator.webkitGetUserMedia({audio:true ,video:true },
+                                    gotVideoStream, function(e){
+                                        trace(arguments.callee.toString() + e);
+                                        video_output.src = "video/v2.webm";
+                                        prepareForRecord();
+                                    });
+
+                }
+        }
+        
+         function gotVideoStream(stream){
+        //alert(arguments.callee.toString());
+        //trace(arguments.callee.toString());
+        //output.src = webkitURL.createObjectURL(stream);
+        video_output = document.getElementById('video_output');
+        video_output.src = webkitURL.createObjectURL(stream);
+        prepareForRecord();
+        //localstream = stream;
+        }
+
+        function startAudio() {
+            trace(arguments.callee.toString());
+        //alert(arguments.callee.toString());
+        if(hasGetUserMedia()){
+            trace(arguments.callee.toString());
+            navigator.webkitGetUserMedia({audio:true},
+                                    gotAudioStream, audiofallback);
+                }
+        }
+
+        function videofallback(e)
+        {
+            trace(arguments.callee.toString() + e);
+            video_output.src = "video/v2.webm";
+        }
+
+        function audiofallback(e)
+        {
+            trace(arguments.callee.toString() + e);
+            audio_output.src = "audio/a1.wav";
+        }
+
+        function trace(text) {
+          // This function is used for logging.
+          var date = new Date();  
+          if (text[text.length - 1] == '\n') {
+            text = text.substring(0, text.length - 1);
+          }
+          console.log((date.getTime() / 1000).toFixed(3) + ": " + text);
+        }
+        
+        function playBothVideo()
+        {
+            var tv1 = document.getElementById('v1');
+            tv1.play();
+        }
+        
+        function resumeVideo()
+        {
+            var tv1 = document.getElementById('v1');
+            tv1.play();
+        }
+        
+        function startRecord(){
+            var canvasContext = canvas.getContext('2d');
+            var canvasHigh = canvas.height;
+            var canvasWidth = canvas.width;
+            
+            video_frames = [];//reset
+            video_output_start_time = Date.now();
+            
+            function drawVideoFrame(time){
+                rafId = requestAnimationFrame(drawVideoFrame);
+
+                canvasContext.drawImage(video_output, 0, 0, canvasWidth, canvasHigh);
+
+                document.title = 'Recording...' + Math.round((Date.now() - video_output_start_time) / 1000) + 's';
+
+                // Read back canvas as webp.
+                //console.time('canvas.dataURL() took');
+                var url = canvas.toDataURL('image/webp', 1); // image/jpeg is way faster :(
+                //console.timeEnd('canvas.dataURL() took');
+                video_frames.push(url);
+
+            }
+            
+            rafId = requestAnimationFrame(drawVideoFrame);
+        }
+        
+        function stopRecord() {
+            video_stop_time = Date.now();
+
+            console.log('frames captured: ' + video_frames.length + ' => ' +
+                        ((video_stop_time - video_start_time) / 1000) + 's video');
+
+            embedVideoPreview();
+            
+            playBothVideo();
+            };
+        
+        function embedVideoPreview(opt_url) {
+
+            var url = opt_url;
+            var video = document.getElementById('video-preview video');
+            var downloadLink = document.getElementById('video-preview a[download]');
+
+            if (!video) {
+                 //alert('video2 is:' + video);
+                video = document.createElement('video');
+                video.autoplay = false;
+                video.controls = true;
+                video.loop = true;
+                //video.style.position = 'absolute';
+                //video.style.top = '70px';
+                //video.style.left = '10px';
+                video.style.width = canvas.width + 'px';
+                video.style.height = canvas.height + 'px';
+                //alert('canvas.width is:' + canvas.width);
+                
+                document.getElementById('video-preview').appendChild(video);
+                var videoone = document.getElementById('v1');
+                var current = videoone.currentTime.toString();
+
+                downloadLink = document.createElement('a');
+                downloadLink.download = 'capture-' + current.toString() + '.webm';
+                downloadLink.textContent = '[ download video ]' + current;
+                downloadLink.title = 'Download your .webm video';
+                var p = document.createElement('p');
+                p.appendChild(downloadLink);
+
+            document.getElementById('video-preview').appendChild(p);
+
+            } else {
+                window.URL.revokeObjectURL(video.src);
+            }
+
+            if (!url) {
+                var webmBlob = Whammy.fromImageArray(video_frames, 1000 / 60);
+                url = window.URL.createObjectURL(webmBlob);
+            }
+//            trace(arguments.callee.toString()+url);
+//            trace(url);
+            video.src = url;
+            downloadLink.href = url;
+            }
+            
+        function pauseBothVideo()
+        {
+            var allvideo = document.getElementsByTagName("video")[0];
+            allvideo.pause();
+            
+            //start record
+            startVideo();
+            
+            //start record
+            startRecord();
+
+        }
+
+          </script>
+</head>
+
+<body>
+<!--
+<div id="all">
+    <div id="top-cell"></div>
+	<div id="center-cell">
+        <div id="left-cell"></div>
+        <div id="middle-cell"></div>
+        <div id="right-cell"></div>
+	</div>
+    <div id="bottom-cell"></div>
+</div>
+--> 
+<!-- this where video goes -->
+
+<!-- first section -->
+<div class="all">
+    <div class="top-cell"></div>
+	<div class="center-cell">
+            <div class="left-cell"></div>
+        <div class="middle-cell">
+             <div id="testvideo1" class="ui-widget-content" >
+                <video id="v1"  controls="controls" title="v1">
+                        <source src="video/v1.webm" type="video/webm" />
+                        <source src="video/v1.ogv" type="video/ogg" />
+                        <source src="video/v1.m4v" type="video/mp4" />
+                        <source src="video/v1.mp4" />
+                        Your browser does not support HTML5 the video tag.
+                        </video>
+            </div>
+        </div>
+        <div class="right-cell"></div>
+	</div>
+    <div class="bottom-cell"></div>
+</div>
+
+<!-- section 2 -->
+<div class="all">
+    <div class="top-cell"></div>
+	<div class="center-cell">
+        <div class="left-cell"></div>
+        <div class="middle-cell">
+            <div id="testvideo2" class="ui-widget-content" >
+                <video id="v2"  controls="controls" title="v2">
+                        <source src="video/v2.webm" type="video/webm" />
+                        <source src="video/v2.ogv" type="video/ogg" />
+                        <source src="video/v2.m4v" type="video/mp4" />
+                        <source src="video/v2.mp4" />
+                        Your browser does not support HTML5 the video tag.
+                        </video>
+            </div>
+        </div>
+        <div class="right-cell"></div>
+	</div>
+    <div class="bottom-cell"></div>
+</div>
+
+<!-- section 3 -->
+<div class="all">
+    <div class="top-cell"></div>
+	<div class="center-cell">
+        <div class="left-cell"></div>
+        <div class="middle-cell">
+            <div id="test_output" class="ui-widget-content">
+                <video id="video_output" autoplay></video>
+<!--                <canvas id="photo"></canvas>-->
+            </div>
+            
+<!--            <div id="test_output2">        
+                <audio id="audio_output" autoplay></audio>
+            </div>
+            <p><button id="btn1" onclick="startVideo()">Start video</button></p>
+                <p id="errorMessageVideo"></p>
+            <p><button id="btn2" onclick="startAudio()">Start audio</button></p>
+                <p id="errorMessageAudio"></p>
+            <audio id="audio_test" src="audio/a1.wav" controls></audio>
+            -->
+            <div id="video-preview">
+            
+            <span id="elasped-time"></span>
+            
+            </div>
+        </div>
+        <div class="right-cell"></div>
+	</div>
+    <div class="bottom-cell"></div>
+</div>
+
+<!-- section 4 -->
+<div class="all">
+    <div class="top-cell"></div>
+	<div class="center-cell">
+        <div class="left-cell"></div>
+        <div class="middle-cell">
+            <p>
+                <button id="playboth" title="playboth" onclick="playBothVideo()">play both</button>
+                <button id="pauseboth" title="pauseboth" onclick="pauseBothVideo()">pause - record</button>
+                <button id="stoprecord" title="stoprecord" onclick="stopRecord()">stop - resume</button>
+            </p>
+       <p id="errorMessagePlayBoth"></p>
+        </div>
+        <div class="right-cell"></div>
+	</div>
+    <div class="bottom-cell"></div>
+</div>
+
+
+
+</body>
+</html>
